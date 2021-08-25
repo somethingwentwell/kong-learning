@@ -1,0 +1,150 @@
+# Kong for Kubernetes with Kong Enterprise with Enterprise features enabled and
+# exposed via TLS-enabled Ingresses. Before installing:
+# * Several settings (search for the string "CHANGEME") require user-provided
+#   Secrets. These Secrets must be created before installation.
+# * Ingresses reference example "<service>.kong.CHANGEME.example" hostnames. These must
+#   be changed to an actual hostname that resolve to your proxy.
+# * Ensure that your session configurations create cookies that are usable
+#   across your services. The admin session configuration must create cookies
+#   that are sent to both the admin API and Kong Manager, and any Dev Portal
+#   instances with authentication must create cookies that are sent to both
+#   the Portal and Portal API.
+
+image:
+  repository: kong/kong-gateway
+  tag: "2.4.1.0-alpine"
+
+env:
+  prefix: /kong_prefix/
+  database: postgres
+
+  password: 
+    valueFrom:
+      secretKeyRef:
+        name: kong-enterprise-superuser-password #CHANGEME - this is the Kong Super User Password
+        key: password
+
+  portal_session_conf:
+    valueFrom:
+        secretKeyRef:
+          name: kong-session-config # specify the portal session config secret
+          key: portal_session_conf
+
+  admin_api_uri: admin.MINIKUBE_IP.nip.io
+  admin_gui_url: http://manager.MINIKUBE_IP.nip.io
+  portal_gui_host: portal.MINIKUBE_IP.nip.io
+  portal_api_url: http://portalapi.MINIKUBE_IP.nip.io
+
+admin:
+  enabled: true
+  type: NodePort
+
+  http:
+    enabled: true
+    servicePort: 8001
+    containerPort: 8001
+    nodePort: 30001
+    parameters: []
+
+  tls:
+    enabled: true
+    servicePort: 8444
+    containerPort: 8444
+    nodePort: 30444
+
+proxy:
+  enabled: true
+  type: NodePort
+
+  http:
+    enabled: true
+    servicePort: 8000
+    containerPort: 8000
+    nodePort: 30000
+
+  tls:
+    enabled: true
+    servicePort: 8443
+    containerPort: 8443
+    nodePort: 30443
+
+
+enterprise:
+  enabled: true
+  license_secret: kong-enterprise-license # Change to your enterprise license
+  vitals:
+    enabled: true
+  portal:
+    enabled: true
+
+manager:
+  enabled: true
+  type: NodePort
+
+  http:
+    enabled: true
+    servicePort: 8002
+    containerPort: 8002
+    nodePort: 30002
+
+  tls:
+    enabled: true
+    servicePort: 8445
+    containerPort: 8445
+    nodePort: 30445
+
+portal:
+  enabled: true
+  type: NodePort
+
+  http:
+    enabled: true
+    servicePort: 8003
+    containerPort: 8003
+    nodePort: 30003
+    parameters: []
+
+  tls:
+    enabled: true
+    servicePort: 8446
+    containerPort: 8446
+    nodePort: 30446
+
+portalapi:
+  enabled: true
+  type: NodePort
+
+  http:
+    enabled: true
+    servicePort: 8004
+    containerPort: 8004
+    nodePort: 30004
+    parameters: []
+
+  tls:
+    enabled: true
+    servicePort: 8447
+    containerPort: 8447
+    nodePort: 30447
+
+# Kong clustering options, for data plane connectivity
+cluster:
+  enabled: true
+  annotations: {}
+  type: NodePort
+
+  tls:
+    enabled: true
+    servicePort: 8005
+    containerPort: 8005
+    nodePort: 30005
+
+ingressController:
+  enabled: false
+
+postgresql:
+  enabled: true
+  postgresqlUsername: kong
+  postgresqlDatabase: kong
+  service:
+    port: 5432
