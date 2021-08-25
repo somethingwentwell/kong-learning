@@ -44,7 +44,7 @@ kubectl create secret generic kong-session-config -n kong --from-file=admin_gui_
 Deploy Kong Gateway on Kubernetes
 
 ```
-sed -i -e 's/MINIKUBE_IP/'$(minikube ip)'/g' values.yaml
+sed -i'.original' -e 's/MINIKUBE_IP/'$(minikube ip)'/g' values.yaml
 
 helm install my-kong kong/kong -n kong --values ./values.yaml
 ```
@@ -64,7 +64,7 @@ minikube service list -n kong
 Create Ingress
 
 ```
-sed -i -e 's/MINIKUBE_IP/'$(minikube ip)'/g' ingress.yaml
+sed -i'.original' -e 's/MINIKUBE_IP/'$(minikube ip)'/g' ingress.yaml
 
 kubectl apply -f ingress.yaml -n kong
 ```
