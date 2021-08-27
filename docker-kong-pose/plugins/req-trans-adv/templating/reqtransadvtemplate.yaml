@@ -1,0 +1,64 @@
+_format_version: "1.1"
+services:
+- connect_timeout: 60000
+  host: httpbin.org
+  name: Other
+  path: /anything
+  port: 80
+  protocol: http
+  read_timeout: 60000
+  retries: 5
+  write_timeout: 60000
+- connect_timeout: 60000
+  host: httpbin.org
+  name: Service
+  path: /anything
+  port: 80
+  protocol: http
+  read_timeout: 60000
+  retries: 5
+  write_timeout: 60000
+  routes:
+  - id: b07feaee-425e-4727-a552-bcb89f4b5ce3
+    paths:
+    - /serviceteam/(?<group>(?!health\b)\b\w+)
+    path_handling: v1
+    preserve_host: false
+    protocols:
+    - http
+    regex_priority: 0
+    strip_path: true
+    https_redirect_status_code: 426
+    plugins:
+    - name: request-transformer-advanced
+      config:
+        add:
+          body: []
+          headers: []
+          querystring: []
+        append:
+          body: []
+          headers: []
+          querystring: []
+        http_method: null
+        remove:
+          body: []
+          headers: []
+          querystring: []
+        rename:
+          body: []
+          headers: []
+          querystring: []
+        replace:
+          body: []
+          headers: []
+          querystring: []
+          uri: /anything/service/api/$(uri_captures.group)
+        whitelist:
+          body: null
+      enabled: true
+      protocols:
+      - grpc
+      - grpcs
+      - http
+      - https

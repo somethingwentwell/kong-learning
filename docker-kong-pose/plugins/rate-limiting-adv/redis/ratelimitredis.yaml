@@ -1,0 +1,163 @@
+_format_version: "1.1"
+services:
+- connect_timeout: 60000
+  host: httpbin.org
+  id: a3a2ab52-e48b-4b89-939b-c7a6b0b6e3be
+  path: /anything
+  port: 80
+  protocol: http
+  read_timeout: 60000
+  retries: 5
+  write_timeout: 60000
+  routes:
+  - id: 78234424-5f48-489f-ab69-0478b866905a
+    methods:
+    - GET
+    paths:
+    - /limit
+    path_handling: v1
+    preserve_host: false
+    protocols:
+    - http
+    regex_priority: 0
+    strip_path: true
+    https_redirect_status_code: 426
+consumers:
+- id: 157ad987-9d50-41d9-9ec9-a242e8e56320
+  custom_id: test2
+  username: test2
+  keyauth_credentials:
+  - id: 78539802-480b-4ef7-a884-16260194dbf4
+    key: test2
+- id: 2fc35a0d-1821-460e-a6a5-2514e888c37b
+  custom_id: test3
+  username: test3
+  keyauth_credentials:
+  - id: f99aa42f-1884-4842-a44d-ac2a0e519813
+    key: test3
+- id: 81414cbd-7ee3-4eb5-bde0-2c638ebb381e
+  custom_id: test
+  username: test
+  keyauth_credentials:
+  - id: ca5a2e62-7c16-4842-8acd-4a97033d2866
+    key: test
+plugins:
+- id: 47267e80-c6a4-4275-8c0e-5817c89e5033
+  name: rate-limiting-advanced
+  config:
+    dictionary_name: kong_rate_limiting_counters
+    header_name: null
+    hide_client_headers: false
+    identifier: consumer
+    limit:
+    - 20
+    namespace: DFfqJBTI2rs879SRbiZee5uK829krCOO
+    redis:
+      cluster_addresses: null
+      database: 0
+      host: redis-container
+      password: null
+      port: 6379
+      sentinel_addresses: null
+      sentinel_master: null
+      sentinel_password: null
+      sentinel_role: null
+      timeout: 2000
+    strategy: redis
+    sync_rate: 1
+    window_size:
+    - 60
+    window_type: sliding
+  service: a3a2ab52-e48b-4b89-939b-c7a6b0b6e3be
+  route: 78234424-5f48-489f-ab69-0478b866905a
+  enabled: true
+  protocols:
+  - grpc
+  - grpcs
+  - http
+  - https
+- id: 75ef85a9-5f3c-4bb5-a199-befb5d15a068
+  name: key-auth
+  config:
+    anonymous: null
+    hide_credentials: false
+    key_in_body: false
+    key_names:
+    - apikey
+    run_on_preflight: true
+  enabled: true
+  protocols:
+  - grpc
+  - grpcs
+  - http
+  - https
+- id: 9d6cb9b8-86ee-4a7e-9f3d-ef05a71930de
+  name: rate-limiting-advanced
+  config:
+    dictionary_name: kong_rate_limiting_counters
+    header_name: null
+    hide_client_headers: false
+    identifier: consumer
+    limit:
+    - 2
+    namespace: DFfqJBTI2rs879SRbiZee5uK829krCOO
+    redis:
+      cluster_addresses: null
+      database: 0
+      host: redis-container
+      password: null
+      port: 6379
+      sentinel_addresses: null
+      sentinel_master: null
+      sentinel_password: null
+      sentinel_role: null
+      timeout: 2000
+    strategy: redis
+    sync_rate: 1
+    window_size:
+    - 60
+    window_type: sliding
+  service: a3a2ab52-e48b-4b89-939b-c7a6b0b6e3be
+  consumer: test2
+  route: 78234424-5f48-489f-ab69-0478b866905a
+  enabled: true
+  protocols:
+  - grpc
+  - grpcs
+  - http
+  - https
+- id: f0f753bb-19d6-4ee4-b155-9891c842965a
+  name: rate-limiting-advanced
+  config:
+    dictionary_name: kong_rate_limiting_counters
+    header_name: null
+    hide_client_headers: false
+    identifier: consumer
+    limit:
+    - 1
+    namespace: DFfqJBTI2rs879SRbiZee5uK829krCOO
+    redis:
+      cluster_addresses: null
+      database: 0
+      host: redis-container
+      password: null
+      port: 6379
+      sentinel_addresses: null
+      sentinel_master: null
+      sentinel_password: null
+      sentinel_role: null
+      timeout: 2000
+    strategy: redis
+    sync_rate: 1
+    window_size:
+    - 60
+    window_type: sliding
+  service: a3a2ab52-e48b-4b89-939b-c7a6b0b6e3be
+  consumer: test
+  route: 78234424-5f48-489f-ab69-0478b866905a
+  enabled: true
+  protocols:
+  - grpc
+  - grpcs
+  - http
+  - https

@@ -1,0 +1,109 @@
+Run Kong
+
+```
+cd ../../docker-kong-pose/
+
+. ./env.sh 
+
+cd ../plugin/other-lang/strapi-compose
+
+curl https://warrenkongdemostor.blob.core.windows.net/strapiappdata/app.zip --output app.zip
+```
+
+Create sample API
+
+email: admin@demo.com
+
+password: P@ssw0rd1
+
+```
+unzip -o app.zip
+
+docker-compose up -d
+
+docker logs strapi-compose_strapi_1 --follow
+```
+
+Download JS PDK and test
+
+```
+cd ../js-plugins/
+
+git clone https://github.com/Kong/kong-js-pdk
+
+cd kong-js-pdk
+
+npm install
+
+npm install babel-preset-env --save
+
+npm test
+```
+
+Develop and test custom plugin
+
+```
+cp ../{js-censor.js,js-censor.test.js} examples
+
+cp ../plugin_test.js .
+
+npm install --save text-censor
+
+npm test
+```
+
+Copy custom plugin to Kong instance
+
+```
+docker cp examples/js-hello.js kong-ent:/usr/local/kong/js-plugins
+
+docker cp examples/js-censor.js kong-ent:/usr/local/kong/js-plugins
+```
+
+Install dependencies and create custom Kong image
+
+```
+docker exec -it -u root kong-ent /bin/bash
+
+apk add --update nodejs npm python make g++
+
+npm install --unsafe -g kong-pdk@0.3.0
+
+cd /usr/local/kong/js-plugins
+
+npm install text-censor
+
+exit
+
+docker commit kong-ent kong-ent-js
+```
+
+Run Kong using custom image and enable JS plugin environment variables
+
+```
+cp ../envjs.sh ../../../docker-kong-pose/
+
+cd ../../../docker-kong-pose/
+
+. ./env.sh
+```
+
+Create service and route in Kong
+
+```
+export MY_URI=$(cat /etc/hosts | grep 127.0.0.1 | tail -1 | sed 's/[^ ]* //')
+
+http post localhost:8001/services name=strapi-jscp url=http://$MY_URI:1337/kong-js-plugins
+
+http post localhost:8001/services/strapi-jscp/routes paths:='["/custom-jsplugin"]
+
+http get localhost:8000/custom-jsplugin
+```
+
+Apply and test custom plugin
+
+```
+http post localhost:8001/services/strapi-jscp/plugins name=js-censor
+
+http get localhost:8000/custom-jsplugin
+```

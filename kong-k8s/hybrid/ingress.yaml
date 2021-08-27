@@ -1,0 +1,48 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kong
+  namespace: kong
+  
+spec:
+  rules:
+  - host: portal.192.168.64.5.nip.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: kong-cp-kong-portal
+            port:
+              number: 8003
+  - host: admin.192.168.64.5.nip.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: kong-cp-kong-admin
+            port:
+              number: 8001
+  - host: manager.192.168.64.5.nip.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: kong-cp-kong-manager
+            port:
+              number: 8002
+  - host: portalapi.192.168.64.5.nip.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: kong-cp-kong-portalapi
+            port:
+              number: 8004

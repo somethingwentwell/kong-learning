@@ -1,0 +1,35 @@
+_format_version: "1.1"
+services:
+- connect_timeout: 60000
+  host: httpbin.org
+  name: httpbin
+  path: /anything
+  port: 80
+  protocol: http
+  read_timeout: 60000
+  retries: 5
+  write_timeout: 60000
+  routes:
+  - id: 6698db3d-fb54-40eb-97dd-5874266d4548
+    paths:
+    - /proxy
+    path_handling: v0
+    preserve_host: false
+    protocols:
+    - http
+    regex_priority: 0
+    strip_path: true
+    https_redirect_status_code: 426
+  plugins:
+  - name: forward-proxy
+    config:
+      https_verify: false
+      proxy_host: squid
+      proxy_port: 3128
+      proxy_scheme: http
+    enabled: true
+    protocols:
+    - grpc
+    - grpcs
+    - http
+    - https

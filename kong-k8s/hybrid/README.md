@@ -8,12 +8,26 @@ minikube addons enable ingress
 minikube tunnel
 ```
 
-https://docs.konghq.com/enterprise/2.5.x/deployment/installation/kong-on-kubernetes/
+https://github.com/Kong/charts/blob/main/charts/kong/README.md#hybrid-mode
 
 Provision a namespace
 
 ```
 kubectl create namespace kong
+```
+
+Generate certificates
+
+```
+openssl req -new -x509 -nodes -newkey ec:<(openssl ecparam -name secp384r1) \
+  -keyout /tmp/cluster.key -out /tmp/cluster.crt \
+  -days 1095 -subj "/CN=kong_clustering"
+```
+
+Set up cluster cert
+
+```
+kubectl create secret tls kong-cluster-cert --cert=/tmp/cluster.crt --key=/tmp/cluster.key -n kong
 ```
 
 Set up license secret
@@ -41,17 +55,23 @@ helm repo add kong https://charts.konghq.com
 helm repo update
 ```
 
-Deploy Kong Gateway on Kubernetes
+Deploy Kong control plane on Kubernetes
 
 ```
-sed -i'.original' -e 's/MINIKUBE_IP/'$(minikube ip)'/g' values.yaml
+sed -i'.original' -e 's/MINIKUBE_IP/'$(minikube ip)'/g' cp-values.yaml
 
-helm install my-kong kong/kong -n kong --values ./values.yaml
+helm install kong-cp kong/kong -n kong --values ./cp-values.yaml
+
+kubectl get po -n kong -w
 ```
 
-Watch pod deployment
+Deploy Kong data plane on Kubernetes
 
 ```
+sed -i'.original' -e 's/MINIKUBE_IP/'$(minikube ip)'/g' dp-values.yaml
+
+helm install kong-dp1 kong/kong -n kong --values ./dp-values.yaml
+
 kubectl get po -n kong -w
 ```
 
@@ -78,7 +98,9 @@ kubectl get ingress -n kong
 Clean up
 
 ```
-helm uninstall my-kong kong/kong -n kong
+helm uninstall kong-cp kong/kong -n kong
 
-kubectl delete pvc data-my-kong-postgresql-0 -n kong
+helm uninstall kong-dp1 kong/kong -n kong
+
+kubectl delete pvc data-kong-cp-postgresql-0 -n kong
 ```

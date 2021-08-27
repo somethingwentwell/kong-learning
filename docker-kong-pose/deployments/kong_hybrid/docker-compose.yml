@@ -1,0 +1,78 @@
+version: "3"
+services:
+
+ postgres:
+  extends:
+   file: ../../base/db.yml
+   service: postgres
+
+ kong-ent-bootstrap:
+  extends:
+   file: ../../base/kong.base.yml
+   service: kong-ent-bootstrap
+  depends_on:
+   - postgres
+  environment:
+   - KONG_DATABASE=postgres
+   - KONG_PG_HOST=postgres
+   - KONG_PG_PASSWORD=kong
+
+ kong-cp:
+  extends:
+   file: ../../base/kong.base.yml
+   service: kong-cp
+  depends_on:
+   - postgres
+  restart: always
+  environment:
+   - KONG_ROLE=control_plane
+#   - KONG_CLUSTER_MTLS=shared                                                            #--shared--mode
+#   - KONG_CLUSTER_CERT=/tmp/cert/hybrid_cert/shared/cluster.crt                          #--shared--mode
+#   - KONG_CLUSTER_CERT_KEY=/tmp/cert/hybrid_cert/shared/cluster.key                      #--shared--mode
+   - KONG_CLUSTER_MTLS=pki                                                          #--pki--mode
+   - KONG_CLUSTER_CA_CERT=/tmp/cert/hybrid_cert/pki/cacert.pem                      #--pki--mode
+   - KONG_CLUSTER_CERT=/tmp/cert/hybrid_cert/pki/server_certs/server.cert.pem      #--pki--mode
+   - KONG_CLUSTER_CERT_KEY=/tmp/cert/hybrid_cert/pki/server_certs/server.key.pem   #--pki--mode
+   - KONG_CLUSTER_LISTEN=0.0.0.0:8005
+   - KONG_DATABASE=postgres
+   - KONG_PG_HOST=postgres
+   - KONG_ANONYMOUS_REPORTS=off
+
+ kong-dp:
+  extends:
+   file: ../../base/kong.base.yml
+   service: kong-dbless
+  image: ${KONG_IMAGE}
+  networks:
+   - kong
+  depends_on:
+   - kong-cp
+  restart: always
+  command: "kong start --run-migrations" 
+  extra_hosts:
+    - "cp.example.com:10.0.0.7"
+  environment:
+   - KONG_ROLE=data_plane
+   - KONG_CLUSTER_CONTROL_PLANE=kong-cp:8005
+#   - KONG_CLUSTER_MTLS=shared                                      #--shared-- mode
+#   - KONG_CLUSTER_CERT=/tmp/cert/hybrid_cert/shared/cluster.crt                #--shared-- mode
+#   - KONG_CLUSTER_CERT_KEY=/tmp/cert/hybrid_cert/shared/cluster.key            #--shared-- mode
+#   - KONG_LUA_SSL_TRUSTED_CERTIFICATE=/tmp/cert/hybrid_cert/shared/cluster.crt #--shared-- mode
+   - KONG_CLUSTER_MTLS=pki                                                          #--pki--mode
+   - KONG_CLUSTER_SERVER_NAME=control-plane.example.com                             #--pki--mode
+   - KONG_CLUSTER_CERT=/tmp/cert/hybrid_cert/pki/client_certs/client.cert.pem       #--pki--mode
+   - KONG_CLUSTER_CA_CERT=/tmp/cert/hybrid_cert/pki/cacert.pem                      #--pki--mode
+   - KONG_CLUSTER_CERT_KEY=/tmp/cert/hybrid_cert/pki/client_certs/client.key.pem    #--pki--mode
+   - KONG_LUA_SSL_TRUSTED_CERTIFICATE=/tmp/cert/hybrid_cert/pki/cacert.pem          #--pki--mode
+   - KONG_LOG_LEVEL=debug 
+   - KONG_DATABASE=off
+   - KONG_LICENSE_DATA=${KONG_LICENSE_DATA}
+   - KONG_ANONYMOUS_REPORTS=off
+   - KONG_PROXY_LISTEN=0.0.0.0:8000, 0.0.0.0:8443 ssl
+   - KONG_STATUS_LISTEN=0.0.0.0:8100
+networks:
+  kong:
+    ipam:
+      driver: default
+      config: 
+        - subnet: 10.0.0.0/24 

@@ -1,0 +1,150 @@
+version: "3"
+services:
+
+ redis-master1:
+  extends:
+   file: ../../../base/redis.yml
+   service: redis
+  restart: always
+  command: "redis-server /usr/local/etc/redis/redis.conf"
+  container_name: redis-master-1
+  networks:
+      kong:
+       ipv4_address: 10.0.0.101
+  volumes:
+  - ./redis/cluster/7001/redis.conf:/usr/local/etc/redis/redis.conf
+
+ redis-master2:
+  extends:
+   file: ../../../base/redis.yml
+   service: redis
+  restart: always
+  container_name: redis-master-2
+  command: "redis-server /usr/local/etc/redis/redis.conf"
+  networks:
+      kong:
+       ipv4_address: 10.0.0.102
+  volumes:
+  - ./redis/cluster/7002/redis.conf:/usr/local/etc/redis/redis.conf
+
+ redis-master3:
+  extends:
+   file: ../../../base/redis.yml
+   service: redis
+  restart: always
+  command: "redis-server /usr/local/etc/redis/redis.conf"
+  container_name: redis-master-3
+  networks:
+      kong:
+       ipv4_address: 10.0.0.103
+  volumes:
+  - ./redis/cluster/7003/redis.conf:/usr/local/etc/redis/redis.conf
+    
+ redis-slave1:
+  extends:
+   file: ../../../base/redis.yml
+   service: redis
+  restart: always
+  command: "redis-server /usr/local/etc/redis/redis.conf"
+  container_name: redis-slave-1
+  networks:
+      kong:
+       ipv4_address: 10.0.0.104
+  volumes:
+  - ./redis/cluster/7004/redis.conf:/usr/local/etc/redis/redis.conf
+
+ redis-slave2:
+  extends:
+   file: ../../../base/redis.yml
+   service: redis
+  restart: always
+  command: "redis-server /usr/local/etc/redis/redis.conf"
+  container_name: redis-slave-2
+  networks:
+      kong:
+       ipv4_address: 10.0.0.105
+  volumes:
+  - ./redis/cluster/7005/redis.conf:/usr/local/etc/redis/redis.conf
+
+ redis-slave3:
+  extends:
+   file: ../../../base/redis.yml
+   service: redis
+  restart: always
+  command: "redis-server /usr/local/etc/redis/redis.conf"
+  container_name: redis-slave-3
+  networks:
+      kong:
+       ipv4_address: 10.0.0.106
+  volumes:
+  - ./redis/cluster/7006/redis.conf:/usr/local/etc/redis/redis.conf
+    
+ redis-cli:
+  extends:
+   file: ../../../base/redis.yml
+   service: redis
+  container_name: redis-cli
+  depends_on:
+   - redis-master1
+   - redis-master2
+   - redis-master3
+   - redis-slave1
+   - redis-slave2
+   - redis-slave3
+  command: 'redis-cli --cluster create 10.0.0.101:7001 10.0.0.102:7002 10.0.0.103:7003 10.0.0.104:7004 10.0.0.105:7005 10.0.0.106:7006 --cluster-replicas 1 --cluster-yes'
+  networks:
+   - kong
+
+ postgres:
+  extends:
+   file: ../../../base/db.yml
+   service: postgres
+
+ kong-ent-bootstrap:
+  extends:
+   file: ../../../base/kong.base.yml
+   service: kong-ent-bootstrap
+  depends_on:
+   - postgres
+  networks:
+   - kong
+  environment:
+   - KONG_DATABASE=postgres
+   - KONG_PG_HOST=postgres
+   - KONG_PG_PASSWORD=kong
+
+ kong-ent:
+  extends:
+   file: ../../../base/kong.base.yml
+   service: kong-ent
+  depends_on:
+   - postgres
+   - kong-ent-bootstrap
+  networks:
+   - kong
+  ports:
+   - 8000:8000
+   - 8001:8001
+   - 8002:8002
+   - 8003:8003
+   - 8004:8004
+   - 8443:8443
+   - 8444:8444
+   - 8445:8445
+   - 8446:8446
+   - 8447:8447
+  extra_hosts:
+    - "python:10.0.0.1"
+  environment:
+#  - KONG_ENFORCE_RBAC=on
+#  - KONG_ADMIN_GUI_AUTH=basic-auth
+#  - KONG_ADMIN_GUI_SESSION_CONF={"secret":"secret","storage":"kong","cookie_secure":false}
+   - KONG_DATABASE=postgres
+   - KONG_PG_HOST=postgres
+   - KONG_PG_PASSWORD=kong
+networks:
+  kong:
+    ipam:
+      driver: default
+      config: 
+        - subnet: 10.0.0.0/24 

@@ -1,0 +1,75 @@
+# Kong for Kubernetes with Kong Enterprise with Enterprise features enabled and
+# exposed via TLS-enabled Ingresses. Before installing:
+# * Several settings (search for the string "CHANGEME") require user-provided
+#   Secrets. These Secrets must be created before installation.
+# * Ingresses reference example "<service>.kong.CHANGEME.example" hostnames. These must
+#   be changed to an actual hostname that resolve to your proxy.
+# * Ensure that your session configurations create cookies that are usable
+#   across your services. The admin session configuration must create cookies
+#   that are sent to both the admin API and Kong Manager, and any Dev Portal
+#   instances with authentication must create cookies that are sent to both
+#   the Portal and Portal API.
+
+image:
+  repository: kong/kong-gateway
+  tag: "2.4.1.0-alpine"
+
+env:
+  prefix: /kong_prefix/
+  database: "off"
+
+  role: data_plane
+
+  # update these based on the values from CP Clustering services
+  cluster_control_plane: MINIKUBE_IP:30005
+  cluster_telemetry_endpoint: MINIKUBE_IP:30006
+
+  cluster_cert: /etc/secrets/kong-cluster-cert/tls.crt
+  cluster_cert_key: /etc/secrets/kong-cluster-cert/tls.key
+  lua_ssl_trusted_certificate: /etc/secrets/kong-cluster-cert/tls.crt
+
+
+admin:
+  enabled: false
+
+proxy:
+  enabled: true
+  type: NodePort 
+  annotations: {}
+
+#+++++++++++++
+# disable HTTP and use only HTTPS
+#+++++++++++++
+  http:
+    enabled: true
+    servicePort: 80
+    containerPort: 8000
+    parameters: []
+
+  tls:
+    enabled: true
+    servicePort: 443
+    containerPort: 8443
+
+enterprise:
+  enabled: true
+  license_secret: kong-enterprise-license # replace with your enterprise license
+  vitals:
+    enabled: true
+
+manager:
+  enabled: false
+
+portal:
+  enabled: false
+
+portalapi:
+  enabled: false
+
+replicaCount: 2 # Number of DP replicas
+
+secretVolumes: # will be be mounted to /etc/secrets/<name>
+  - kong-cluster-cert
+
+ingressController:
+  enabled: false

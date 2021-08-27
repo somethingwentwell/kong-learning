@@ -1,0 +1,73 @@
+version: "3"
+services:
+
+ keycloak:
+  image: jboss/keycloak
+  container_name: keycloak
+  networks:
+   - kong
+  environment:
+   - KEYCLOAK_USER=admin
+   - KEYCLOAK_PASSWORD=admin
+   - DB_VENDOR=h2
+  ports:
+   - 8080:8080
+
+ postgres:
+  extends:
+   file: ../../base/db.yml
+   service: postgres
+
+ kong-ent-bootstrap:
+  extends:
+   file: ../../base/kong.base.yml
+   service: kong-ent-bootstrap
+  depends_on:
+   - postgres
+  networks:
+   - kong
+  environment:
+   - KONG_DATABASE=postgres
+   - KONG_PG_HOST=postgres
+   - KONG_PG_PASSWORD=kong
+
+ kong-ent:
+  extends:
+   file: ../../base/kong.base.yml
+   service: kong-ent
+  depends_on:
+   - postgres
+   - kong-ent-bootstrap
+  networks:
+   - kong
+  ports:
+   - 8000:8000
+   - 8001:8001
+   - 8002:8002
+   - 8003:8003
+   - 8004:8004
+   - 8443:8443
+   - 8444:8444
+   - 8445:8445
+   - 8446:8446
+   - 8447:8447
+  extra_hosts:
+    - "python:10.0.0.1"
+  environment:
+#  - KONG_ENFORCE_RBAC=on
+#  - KONG_ADMIN_GUI_AUTH=basic-auth
+#  - KONG_ADMIN_GUI_SESSION_CONF={"secret":"secret","storage":"kong","cookie_secure":false}
+   - KONG_DATABASE=postgres
+   - KONG_PG_HOST=postgres
+   - KONG_PG_PASSWORD=kong
+   - KONG_PORTAL_GUI_HOST=kubernetes.docker.internal:8003
+  #  - KONG_PORTAL_API_URL=kubernetes.docker.internal:8004
+  #  - KONG_PORTAL_CORS_ORIGINS=*
+   - KONG_PORTAL_AUTH_CONF={"logout_redirect_uri":["http://kubernetes.docker.internal:8003"],"consumer_by":["username","custom_id","id"],"login_redirect_uri":["http://kubernetes.docker.internal:8003"],"logout_methods":["GET"],"logout_query_arg":"logout","issuer":"http://kubernetes.docker.internal:8080/auth/realms/master","login_action":"redirect","login_redirect_mode":"query","ssl_verify":false,"leeway":1000,"client_id":["kong"],"consumer_claim":["email"],"client_secret":["9a1da331-8df2-472c-a2d6-73afbf8dfeea"],"forbidden_redirect_uri":["http://kubernetes.docker.internal:8003/unauthorized"],"scopes":["openid","profile","email","offline_access"]}
+
+networks:
+  kong:
+    ipam:
+      driver: default
+      config: 
+        - subnet: 10.0.0.0/24 
