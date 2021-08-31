@@ -1,0 +1,5 @@
+# values.yaml
+plugins:
+  configMaps:                # change this to 'secrets' if you created a secret
+  - name: kong-plugin-myheader
+    pluginName: myheader
