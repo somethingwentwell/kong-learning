@@ -4,10 +4,6 @@ Run Kong
 cd ../../docker-kong-pose/
 
 . ./env.sh 
-
-cd ../plugin/other-lang/strapi-compose
-
-curl https://warrenkongdemostor.blob.core.windows.net/strapiappdata/app.zip --output app.zip
 ```
 
 Create sample API
@@ -17,6 +13,10 @@ email: admin@demo.com
 password: P@ssw0rd1
 
 ```
+cd ../plugin/other-lang/strapi-compose
+
+curl https://warrenkongdemostor.blob.core.windows.net/strapiappdata/app.zip --output app.zip
+
 unzip -o app.zip
 
 docker-compose up -d
@@ -27,7 +27,7 @@ docker logs strapi-compose_strapi_1 --follow
 Download JS PDK and test
 
 ```
-cd ../js-plugins/
+cd ../plugin/other-lang/js-plugins/
 
 git clone https://github.com/Kong/kong-js-pdk
 
@@ -52,14 +52,6 @@ npm install --save text-censor
 npm test
 ```
 
-Copy custom plugin to Kong instance
-
-```
-docker cp examples/js-hello.js kong-ent:/usr/local/kong/js-plugins
-
-docker cp examples/js-censor.js kong-ent:/usr/local/kong/js-plugins
-```
-
 Install dependencies and create custom Kong image
 
 ```
@@ -69,11 +61,23 @@ apk add --update nodejs npm python make g++
 
 npm install --unsafe -g kong-pdk@0.3.0
 
-cd /usr/local/kong/js-plugins
+cd /usr/local/kong
+
+mkdir js-plugins
+
+cd js-plugins
 
 npm install text-censor
 
 exit
+```
+
+Copy custom plugin to Kong instance
+
+```
+docker cp examples/js-hello.js kong-ent:/usr/local/kong/js-plugins
+
+docker cp examples/js-censor.js kong-ent:/usr/local/kong/js-plugins
 
 docker commit kong-ent kong-ent-js
 ```
@@ -81,11 +85,13 @@ docker commit kong-ent kong-ent-js
 Run Kong using custom image and enable JS plugin environment variables
 
 ```
-cp ../envjs.sh ../../../docker-kong-pose/
+cp ../../envjs.sh ../../../../docker-kong-pose/
 
-cd ../../../docker-kong-pose/
+cd ../../../../docker-kong-pose/
 
-. ./env.sh
+. ./down.sh
+
+. ./envjs.sh
 ```
 
 Create service and route in Kong
@@ -95,7 +101,7 @@ export MY_URI=$(cat /etc/hosts | grep 127.0.0.1 | tail -1 | sed 's/[^ ]* //')
 
 http post localhost:8001/services name=strapi-jscp url=http://$MY_URI:1337/kong-js-plugins
 
-http post localhost:8001/services/strapi-jscp/routes paths:='["/custom-jsplugin"]
+http post localhost:8001/services/strapi-jscp/routes paths:='["/custom-jsplugin"]'
 
 http get localhost:8000/custom-jsplugin
 ```
