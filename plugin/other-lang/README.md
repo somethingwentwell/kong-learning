@@ -27,7 +27,7 @@ docker logs strapi-compose_strapi_1 --follow
 Download JS PDK and test
 
 ```
-cd ../plugin/other-lang/js-plugins/
+cd ../js-plugins/
 
 git clone https://github.com/Kong/kong-js-pdk
 
